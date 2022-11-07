@@ -159,7 +159,7 @@ int stack_isEmpty(const Stack *stk, unsigned *error = nullptr);
 
 #else
 
-#define stack_dump(stk, errorCode, filePtr) ; 
+#define stack_dump(stk, errorCode, filePtr) ;
 
 #endif
 

@@ -34,27 +34,27 @@ int isPoison(int element);
 /// @param [in] element Stack element for writing
 /// @param [in] filePtr File for writing
 /// @return Count of chars which was write or -1 if element == nullptr
-int printElement(const Node *element, FILE *filePtr);
+int printElement(Node *element, FILE *filePtr);
 
 /// Return length of elemtnt
 /// @param [in] element Stack element for writing
 /// @return Length of element in chars or -1 if element == nullptr
-int elementLength(const Node *element);
+int elementLength(Node *element);
 
 /// Return max length of element
 /// @param [in] element Stack element
 /// @return Max element length
-int maxElementLength(const Node *element);
+int maxElementLength(Node *element);
 
 /// Return Poison value for stack
 /// @param [in] element Stack element
 /// @return Poison value
-const Node *getPoison(const Node *element);
+Node *getPoison(Node *element);
 
 /// Check that element is poison
 /// @param [in] element Stack element
 /// @return Is element poison
-int isPoison(const Node *element);
+int isPoison(Node *element);
 
 
 #endif

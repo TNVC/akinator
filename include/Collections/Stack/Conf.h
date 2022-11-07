@@ -16,6 +16,6 @@
 //#define MESSAGE_LOG_LEVEL_
 #define VALUE_LOG_LEVEL_
 
-typedef const Node *Element;
+typedef Node *Element;
 
 #endif

@@ -7,10 +7,6 @@
 #include <ctype.h>
 #include "Assert.h"
 
-//#include <stddef.h>
-#include <wchar.h>
-#include <wctype.h>
-
 #pragma GCC diagnostic ignored "-Wcast-qual"
 
 const int CMD_SIZE = 80;
@@ -33,25 +29,6 @@ void initAudio(const Settings *settings)
   HasVoice = settings->hasVoice;
 
   Locale = settings->locale;
-
-  //EST_Wave wave;
-  //  int heap_size = 21000;
-  //  int load_init_files = 1;
-
-  //  festival_initialize(1, DEFAULT_HEAP_SIZE);
-
-  //  festival_eval_command("(voice_ked_diphone)");
-  //festival_say_text("hello world");
-
-  //festival_text_to_wave("hello world",wave);
-  //wave.save("/tmp/wave.wav","riff");
-
-  // festival_say_file puts the system in async mode so we better
-  // wait for the spooler to reach the last waveform before exiting
-  // This isn't necessary if only festival_say_text is being used (and
-  // your own wave playing stuff)
-  //  festival_wait_for_spooler();
-  //  festival_tidy_up();
 }
 
 int audioPrintf(const char *format, ...)
@@ -126,8 +103,6 @@ static void saySentence(const char *sentence)
 
   sprintf(cmdBuffer + offset, "\" | festival --tts --language %s",
           (Locale == db::Locale::RU ? "russian" : "english"));
-
-  //          printf("\033[31m%s\033[0m\n", cmdBuffer);////
 
   system(cmdBuffer);
 }

@@ -1,25 +1,38 @@
 #include "AkinatorUtils.h"
 #include "TreeDump.h"
 
+#include "Stack.h"
+
 #include <stdlib.h>
 #include <ctype.h>
 #include "TextReader.h"
 #include "Settings.h"
 #include "ColorOutput.h"
 #include "StringsUtils.h"
+#include "ErrorHandler.h"
 #include "Assert.h"
 
 #pragma GCC diagnostic ignored "-Wformat-security"
 
 const int MAX_ANSWER_SIZE   = 10;
-
 const int MAX_CMD_SIZE      = 64;
-
 const int COUNT_OF_NEGATIVE = 3;
 
-static int readAnswer();
+const int NEGATIVE     = 0;
+const int POSITIVE     = 1;
+const int PROBABLY     = 2;
+const int PROBABLY_NOT = 3;
+const int UNKNOW       = 4;
 
-static bool checkAnswer(const char *answer);
+static int readAnswer(bool isFinal = false);
+
+static bool checkAnswer(const char *answer, bool isFinal);
+
+static int convertAnswer(const char *answer);
+
+static Node *getNext(Node *node, Stack *stack);
+
+static bool guessNode(Node **current, Stack *inaccurates);
 
 static void addObject(Tree *tree, Node *node);
 
@@ -29,7 +42,11 @@ static void printNegative();
 
 static const Node *getNode(const Tree *tree);
 
+static void printDetermine(const Node *node, const char *path);
+
 static char *getPath(const Node *node);
+
+static int printSame(const char *firstPath, const char *secondPath, const Node **node);
 
 void guess(Tree *tree)
 {
@@ -44,68 +61,159 @@ void guess(Tree *tree)
                           db::getString(&Bundle, "question.final"));
       printf(RESET);
 
-      if (!readAnswer())
+      if (!readAnswer(true))
         addObject(tree, tree->root);
 
       return;
     }
 
-  while (current->left)
+  Stack inaccurates = {};
+  stack_init(&inaccurates, 10);
+
+  do
     {
+      if (!guessNode(&current, &inaccurates))
+        {
+          stack_destroy(&inaccurates);
+
+          return;
+        }
+
       printf(FG_BRIGHT_CYAN);
-      audioPrintf("%s%s", current->value,
-                  db::getString(&Bundle, "question"));
+      audioPrintf("%s%s%s", db::getString(&Bundle, "answer.final"),
+                  current->value, db::getString(&Bundle, "question.final"));
       printf(RESET);
 
-      if (readAnswer())
-        current = current->left;
+      if (!readAnswer(true))
+        {
+          if (stack_size(&inaccurates))
+            {
+              printf(FG_BRIGHT_CYAN);
+              audioPrintf("%s%s", db::getString(&Bundle, "guess.continue"),
+                          db::getString(&Bundle, "question.final"));
+              printf(RESET);
+            }
+
+          if (!stack_size(&inaccurates) || !readAnswer(true))
+            {
+              addObject(tree, current);
+
+              break;
+            }
+          else
+            current = stack_pop(&inaccurates);
+        }
       else
-        current = current->right;
-    }
+        {
+          printf(FG_BRIGHT_CYAN);
+          audioPrintf("%s\n", db::getString(&Bundle, "guess.win"));
+          printf(RESET);
 
-  printf(FG_BRIGHT_CYAN);
-  audioPrintf("%s%s%s", db::getString(&Bundle, "answer.final"),
-              current->value, db::getString(&Bundle, "question.final"));
-  printf(RESET);
+          break;
+        }
+    } while (current);
 
-  if (!readAnswer())
-    addObject(tree, current);
-  else
-    {
-      printf(FG_BRIGHT_CYAN);
-      audioPrintf("%s\n", db::getString(&Bundle, "guess.win"));
-      printf(RESET);
-    }
+  stack_destroy(&inaccurates);
 }
 
-static int readAnswer()
+static int readAnswer(bool isFinal)
 {
   char answer[MAX_ANSWER_SIZE] = "";
 
   printf(BOLD);
 
-  while (scanf(" %s", answer) != 1 || !checkAnswer(answer))
+  while (scanf(" %s", answer) != 1 || !checkAnswer(answer, isFinal))
     {
       while (getchar() != '\n') continue;
 
-      printf(RESET);
+      printf(RESET FG_BRIGHT_CYAN);
       audioPrintf("%s", db::getString(&Bundle, "input.incorrect"));
-      printf(BOLD);
+      printf(RESET BOLD);
     }
 
   while (getchar() != '\n') continue;
 
   printf(RESET);
 
-  return !stricmp(db::getString(&Bundle, "answer.positive"), answer);
+  return convertAnswer(answer);
 }
 
-static bool checkAnswer(const char *answer)
+static bool checkAnswer(const char *answer, bool isFinal)
 {
   assert(answer);
 
-  return !stricmp(db::getString(&Bundle, "answer.positive"), answer) ||
-         !stricmp(db::getString(&Bundle, "answer.negative"), answer);
+  if (isFinal)
+    return !stricmp(db::getString(&Bundle, "answer.positive"), answer) ||
+           !stricmp(db::getString(&Bundle, "answer.negative"), answer);
+  else
+    return !stricmp(db::getString(&Bundle, "answer.positive")   , answer) ||
+           !stricmp(db::getString(&Bundle, "answer.negative")   , answer) ||
+           !stricmp(db::getString(&Bundle, "answer.unknown")    , answer) ||
+           !stricmp(db::getString(&Bundle, "answer.probably")   , answer) ||
+           !stricmp(db::getString(&Bundle, "answer.probablyNot"), answer);
+}
+
+static int convertAnswer(const char *answer)
+{
+  assert(answer);
+
+  if      (!stricmp(db::getString(&Bundle, "answer.positive"),    answer))
+    return POSITIVE;
+  else if (!stricmp(db::getString(&Bundle, "answer.negative"),    answer))
+      return NEGATIVE;
+  else if (!stricmp(db::getString(&Bundle, "answer.probably"),    answer))
+    return PROBABLY;
+  else if (!stricmp(db::getString(&Bundle, "answer.probablyNot"), answer))
+    return PROBABLY_NOT;
+  else if (!stricmp(db::getString(&Bundle, "answer.unknown"),     answer))
+    return UNKNOW;
+  else
+    {
+      handleError(db::getString(&Bundle, "error.unexpected"));
+
+      return NEGATIVE;
+    }
+}
+
+static Node *getNext(Node *node, Stack *stack)
+{
+  switch (readAnswer())
+    {
+    case UNKNOW:
+    case PROBABLY:     stack_push(stack, node->right);
+      [[fallthrough]];
+    case POSITIVE: return node->left;
+    case PROBABLY_NOT: stack_push(stack, node->left);
+      [[fallthrough]];
+    case NEGATIVE: return node->right;
+    default:
+      {
+        handleError(db::getString(&Bundle, "error.unexpected"));
+
+        return nullptr;
+      }
+    }
+}
+
+static bool guessNode(Node **current, Stack *inaccurates)
+{
+  assert(current);
+  assert(inaccurates);
+
+  while ((*current)->left)
+    {
+      printf(FG_BRIGHT_CYAN);
+      audioPrintf("%s%s", (*current)->value,
+                  db::getString(&Bundle, "question"));
+      printf(RESET);
+
+      *current = getNext(*current, inaccurates);
+
+      if (!*current)
+          return false;
+    }
+
+  return true;
 }
 
 static void addObject(Tree *tree, Node *node)
@@ -287,25 +395,10 @@ void difference(const Tree *tree)
   firstNode  = tree->root;
   secondNode = tree->root;
 
-  int i = 0;
+  int i = printSame(firstPath, secondPath, &firstNode);
 
-  for ( ; firstPath[i] && secondPath[i] && firstPath[i] == secondPath[i]; ++i)
-    {
-      printf(FG_BRIGHT_RED);
-      audioPrintf("%s", db::getString(&Bundle, "difference.same"));
-
-      if (firstPath[i] == 'r')
-        printNegative();
-
-      audioPrintf("%s\n", firstNode->value);
-
-      printf(RESET);
-
-      if (firstPath[i] == 'l')
-        firstNode = secondNode = secondNode->left;
-      else
-        firstNode = secondNode = secondNode->right;
-    }
+  if (i)
+    secondNode = firstNode;
 
   if (!i)
     {
@@ -320,18 +413,7 @@ void difference(const Tree *tree)
       printf(RESET FG_BRIGHT_RED);
     }
 
-  for (int j = 0; firstPath[i + j]; ++j)
-    {
-      if (firstPath[i + j] == 'r')
-        printNegative();
-
-      audioPrintf("%s\n", firstNode->value);
-
-      if (firstPath[i + j] == 'l')
-        firstNode = firstNode->left;
-      else
-        firstNode = firstNode->right;
-    }
+  printDetermine(firstNode, firstPath + i);
 
   if (secondPath[i])
     {
@@ -340,23 +422,31 @@ void difference(const Tree *tree)
       printf(RESET FG_BRIGHT_RED);
     }
 
-  for (int j = 0; secondPath[i + j]; ++j)
-    {
-      if (secondPath[i + j] == 'r')
-        printNegative();
-
-      audioPrintf("%s\n", secondNode->value);
-
-      if (secondPath[i + j] == 'l')
-        secondNode = secondNode->left;
-      else
-        secondNode = secondNode->right;
-    }
+  printDetermine(secondNode, secondPath + i);
 
   free(firstPath);
   free(secondPath);
 
   printf(RESET);
+}
+
+static void printDetermine(const Node *node, const char *path)
+{
+  assert(node);
+  assert(path);
+
+  for (int i = 0; path[i]; ++i)
+    {
+      if (path[i] == 'r')
+        printNegative();
+
+      audioPrintf("%s\n", node->value);
+
+      if (path[i] == 'l')
+        node = node->left;
+      else
+        node = node->right;
+    }
 }
 
 static const Node *getNode(const Tree *tree)
@@ -405,6 +495,35 @@ static char *getPath(const Node *node)
     path[--depth] = ((temp->parent->left == temp) ? 'l' : 'r');
 
   return path;
+}
+
+static int printSame(const char *firstPath, const char *secondPath, const Node **node)
+{
+  assert(firstPath);
+  assert(secondPath);
+  assert(node);
+
+  int i = 0;
+
+  for ( ; firstPath[i] && secondPath[i] && firstPath[i] == secondPath[i]; ++i)
+    {
+      printf(FG_BRIGHT_RED);
+      audioPrintf("%s", db::getString(&Bundle, "difference.same"));
+
+      if (firstPath[i] == 'r')
+        printNegative();
+
+      audioPrintf("%s\n", (*node)->value);
+
+      printf(RESET);
+
+      if (firstPath[i] == 'l')
+        *node = (*node)->left;
+      else
+        *node = (*node)->right;
+    }
+
+  return i;
 }
 
 void show(const Tree *tree)

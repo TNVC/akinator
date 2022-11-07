@@ -73,10 +73,10 @@ static int getIndex(const db::HashMap *map, const db::key_t key)
 
 unsigned db::validateHashMap(const db::HashMap *map)
 {
-  static int countOfCall = 0;
+  //  static int countOfCall = 0;
 
-  if (!countOfCall++)
-    printf("#TODO validateHashMap\n");
+  //  if (!countOfCall++)
+  //    printf("#TODO validateHashMap\n");
 
   if (!map)
     return db::HASH_MAP_IS_NULL;

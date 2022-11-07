@@ -30,7 +30,7 @@
 const size_t LOCALE_SIZE    = 3;
 const size_t EXTENSION_SIZE = 11;//".properties"
 
-const size_t DEFAULT_CAPACITY = 16;
+const size_t DEFAULT_CAPACITY = 64;
 
 static FILE *fopenProperties(const char *fileName, db::Locale locale, int *error = nullptr);
 
@@ -38,10 +38,10 @@ static void parsePropertiesFile(db::HashMap *map, FILE *file, int *error = nullp
 
 static unsigned validateBundle(const db::ResourceBundle *bundle)
 {
-  static int countOfCall = 0;
+  //  static int countOfCall = 0;
 
-  if (!countOfCall++)
-    printf("#TODO validateBundle\n");
+  //  if (!countOfCall++)
+  //    printf("#TODO validateBundle\n");
 
   if (!bundle)
     return db::RESOURCE_BUNDLE_IS_NULL;
