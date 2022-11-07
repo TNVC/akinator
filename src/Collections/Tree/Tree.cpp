@@ -30,7 +30,8 @@ void destroyTree(Tree *tree, int *error)
 {
   CHECK_VALID(tree, error);
 
-  removeNode(tree->root, error);
+  if (tree->root)
+    removeNode(tree->root, error);
 
   tree->root = nullptr;
   tree->size = 0;
@@ -43,7 +44,10 @@ const Node *findElement(const Tree *tree, element_t value, int isList, int *erro
   if (!validateValue(value))
     ERROR(0);
 
-  const Node *result = findNode(tree->root, value);
+  const Node *result = nullptr;
+
+  if (tree->root)
+    result = findNode(tree->root, value);
 
   if (!result)
     return nullptr;

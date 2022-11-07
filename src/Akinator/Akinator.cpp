@@ -52,32 +52,6 @@ int init()
 
   db::getBundle(&Bundle, "messages", settings.locale, &errorCode);
 
-  #if 0
-
-  char **keys = db::keys(&Bundle);
-
-  for (size_t i = 0; i < db::keysCount(&Bundle); ++i)
-    {
-      printf("'%s' = '%s'\n", keys[i], db::getString(&Bundle, keys[i]));
-
-      free(keys[i]);
-    }
-  free(keys);
-  printf("\n\n");
-
-  char **values = db::values(&Bundle.data);
-
-  for (size_t i = 0; i < db::size(&Bundle.data); ++i)
-    {
-      printf("'%s'\n", values[i]);
-
-      free(values[i]);
-    }
-  free(values);
-  printf("\n\n");
-
-  #endif
-
   srand(static_cast<unsigned>(time(0)));
 
   atexit(destroy);
@@ -118,7 +92,7 @@ void start()
         case CHANGE_SAVE: needSave = !needSave;  break;
         case QUIT:
           {
-            audioPrintf(db::getString(&Bundle, "goodbye"));
+            audioPrintf("%s\n", db::getString(&Bundle, "goodbye"));
 
             keepLoop = false;
 
@@ -195,13 +169,13 @@ static bool saveTree(const Tree *tree)
 static int menu(bool needSave)
 {
   printf(ITALIC);
-  printf(db::getString(&Bundle, needSave ? "menu.statusPositive" :
-                                           "menu.statusNegative"));
+  audioPrintf("%s\n", db::getString(&Bundle, needSave ? "menu.statusPositive" :
+                                                   "menu.statusNegative"));
   printf(RESET);
-  printf(db::getString(&Bundle, "menu.choice"));
-  printf(db::getString(&Bundle, needSave ? "menu.choiceSavePositive" :
-                                           "menu.choiceSaveNegative"));
-  printf(db::getString(&Bundle, "menu.input"));
+  audioPrintf(db::getString(&Bundle, "menu.choice"));
+  audioPrintf("%s\n", db::getString(&Bundle, needSave ? "menu.choiceSavePositive" :
+                                                        "menu.choiceSaveNegative"));
+  audioPrintf(db::getString(&Bundle, "menu.input"));
   printf(BOLD);
 
   char answer[10] = "";
@@ -213,7 +187,7 @@ static int menu(bool needSave)
         continue;
 
       printf(RESET);
-      printf(db::getString(&Bundle, "input.incorrect"));
+      audioPrintf(db::getString(&Bundle, "input.incorrect"));
       printf(BOLD);
     }
 

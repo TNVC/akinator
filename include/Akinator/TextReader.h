@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include "Settings.h"
 
-#define MAX_MESSAGE_SIZE 256
+#define MAX_MESSAGE_SIZE 512
 
 void initAudio(const Settings *settings);
 

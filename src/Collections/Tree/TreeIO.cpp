@@ -18,7 +18,8 @@ void saveTree(const Tree *tree, FILE *file, int *error)
   if (!file)
     ERROR();
 
-  printNode(tree->root, file);
+  if(tree->root)
+    printNode(tree->root, file);
 
   CHECK_VALID(tree, error);
 }

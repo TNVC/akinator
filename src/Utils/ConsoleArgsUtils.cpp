@@ -119,6 +119,8 @@ int parseConsoleArgs(const int argc, const char * const argv[], Settings *settin
   setDefaultSettings(settings);
   settings->programmName = argv[0];
 
+  setSettings(settings);
+
   for (int i = 1; i < argc; ++i)
     {
       if (!strcmp(argv[i], FLAGS[HELP]))
@@ -168,7 +170,7 @@ static void setDefaultSettings(Settings *settings)
   settings->programmName = nullptr;
   settings->source       = nullptr;
   settings->target       = nullptr;
-  settings->hasVoice     = true;
+  settings->hasVoice     = false;
   settings->hasViz       = false;
   settings->hasTxt       = false;
   settings->locale       = db::Locale::EN;
@@ -176,20 +178,20 @@ static void setDefaultSettings(Settings *settings)
 
 static int handleLoad(const char *argument, Settings *settings)
 {
-  HANDLE_FILE_NAME(argument, source);
-
   char *fileName = addDirectory(argument);
 
   if (!isFileExists(fileName))
     {
-      free(fileName);
-
       handleError("No such file [%s]", fileName);
+
+      free(fileName);
 
       return CONSOLE_NO_SUCH_FILE_FOUND;
     }
 
   free(fileName);
+
+  HANDLE_FILE_NAME(argument, source);
 
   return 0;
 }
