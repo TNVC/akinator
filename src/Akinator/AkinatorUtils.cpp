@@ -41,7 +41,7 @@ void guess(Tree *tree)
     {
       printf(FG_BRIGHT_CYAN);
       audioPrintf("%s%s", db::getString(&Bundle, "answer.empty"),
-                          db::getString(&Bundle, "answer"));
+                          db::getString(&Bundle, "question.final"));
       printf(RESET);
 
       if (!readAnswer())
@@ -54,7 +54,7 @@ void guess(Tree *tree)
     {
       printf(FG_BRIGHT_CYAN);
       audioPrintf("%s%s", current->value,
-                  db::getString(&Bundle, "answer"));
+                  db::getString(&Bundle, "question"));
       printf(RESET);
 
       if (readAnswer())
@@ -65,7 +65,7 @@ void guess(Tree *tree)
 
   printf(FG_BRIGHT_CYAN);
   audioPrintf("%s%s%s", db::getString(&Bundle, "answer.final"),
-              current->value, db::getString(&Bundle, "answer"));
+              current->value, db::getString(&Bundle, "question.final"));
   printf(RESET);
 
   if (!readAnswer())
@@ -305,6 +305,12 @@ void difference(const Tree *tree)
         firstNode = secondNode = secondNode->left;
       else
         firstNode = secondNode = secondNode->right;
+    }
+
+  if (!i)
+    {
+      printf(FG_BRIGHT_RED);
+      audioPrintf("%s\n", db::getString(&Bundle, "difference.absolute"));
     }
 
   if (firstPath[i])

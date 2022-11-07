@@ -41,3 +41,32 @@ int isPoison(int element)
 {
   return (int)0xDED00DED == element;
 }
+
+
+int printElement(const Node *element, FILE *filePtr)
+{
+  if (!isPointerCorrect(filePtr))
+    return -1;
+
+  return fprintf(filePtr, "%60.60s", element->value);
+}
+
+int elementLength(const Node *value)
+{
+  return 60;
+}
+
+int maxElementLength(const Node *element)
+{
+  return 60;
+}
+
+const Node *getPoison(const Node *element)
+{
+  return nullptr;
+}
+
+int isPoison(const Node * element)
+{
+  return nullptr == element;
+}

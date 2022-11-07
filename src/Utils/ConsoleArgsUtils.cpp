@@ -146,7 +146,7 @@ int parseConsoleArgs(const int argc, const char * const argv[], Settings *settin
           handleUnknownFlag(argv[i]);
       else
         {
-          if (handleSave(argv[i], settings))
+          if (handleLoad(argv[i], settings))
             return CONSOLE_NO_SUCH_FILE_FOUND;
         }
     }

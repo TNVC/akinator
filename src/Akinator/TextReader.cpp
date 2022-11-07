@@ -11,8 +11,18 @@
 #include <wchar.h>
 #include <wctype.h>
 
+#pragma GCC diagnostic ignored "-Wcast-qual"
+
+const int CMD_SIZE = 80;
+
 static int HasVoice = false;
 static db::Locale Locale = db::Locale::EN;
+
+static int sayText(const char *format, va_list args);
+
+static void saySentence(const char *sentence);
+
+static char *strchrs(const char *string, const char *chars, int number = 1);
 
 static int printAlpha(char *target, const char *source);
 
@@ -46,35 +56,97 @@ void initAudio(const Settings *settings)
 
 int audioPrintf(const char *format, ...)
 {
-  static char buffer[MAX_MESSAGE_SIZE] = "";
+  assert(format);
 
   va_list args = {};
 
   va_start(args, format);
 
-  int result = vsprintf(buffer, format, args);
+  int result = 0;
+
+  if (HasVoice)
+    result = sayText(format, args);
+  else
+    result = vprintf(format, args);
 
   va_end(args);
 
-  printf("%s", buffer);
+  return result;
+}
 
-  if (HasVoice && Locale != db::Locale::PL)
+static int sayText(const char *format, va_list args)
+{
+  if (Locale == db::Locale::PL)
+    return vprintf(format, args);
+
+  static char buffer   [MAX_MESSAGE_SIZE           ] = "";
+
+  int result = vsprintf(buffer, format, args);
+
+  char *wordStart = buffer;
+  char *wordEnd   = strchrs(wordStart, " \t\n/", 2);
+
+  for ( ; wordEnd; wordEnd = strchrs(wordStart, " \t\n/", 2))
     {
-      static char cmdBuffer[MAX_MESSAGE_SIZE + 80] = "";
+      char temp = wordEnd[1];
+      wordEnd[1] = '\0';
 
-      int offset  = sprintf(cmdBuffer, "echo \"");
-          offset += printAlpha(cmdBuffer + offset , buffer);
+      printf("%s", wordStart);
 
+      fflush(stdout);
 
-          sprintf(cmdBuffer + offset, "\" | festival --tts --language %s",
-                        (Locale == db::Locale::RU ? "russian" : "english"));
+      saySentence(wordStart);
 
-          //          printf("\033[31m%s\033[0m\n", cmdBuffer);////
+      wordEnd[1] = temp;
 
-          system(cmdBuffer);
+      wordStart = wordEnd + 1;
+    }
+
+  if (*wordStart != '\0')
+    {
+      printf("%s", wordStart);
+
+      fflush(stdout);
+
+      saySentence(wordStart);
     }
 
   return result;
+}
+
+static void saySentence(const char *sentence)
+{
+  assert(sentence);
+
+  static char cmdBuffer[MAX_MESSAGE_SIZE + CMD_SIZE] = "";
+
+  int offset  = sprintf(cmdBuffer, "echo \"");
+  offset += printAlpha(cmdBuffer + offset, sentence);
+
+
+  sprintf(cmdBuffer + offset, "\" | festival --tts --language %s",
+          (Locale == db::Locale::RU ? "russian" : "english"));
+
+  //          printf("\033[31m%s\033[0m\n", cmdBuffer);////
+
+  system(cmdBuffer);
+}
+
+static char *strchrs(const char *string, const char *chars, int number)
+{
+  assert(string);
+  assert(chars);
+  assert(number > 0);
+
+  int i = 0;
+  for ( ; string[i]; ++i)
+      if (strchr(chars, string[i]))
+        {
+          if (!--number)
+            return (char *)(string + i);
+        }
+
+  return nullptr;
 }
 
 static int printAlpha(char *target, const char *source)
@@ -90,7 +162,7 @@ static int printAlpha(char *target, const char *source)
       if (source[secondIndex] == '/')
         target[firstIndex++] = ' ';
 
-      if (ispunct(source[secondIndex]))// && source[secondIndex] != '/')
+      if (ispunct(source[secondIndex]))
         continue;
 
       target[firstIndex++] = source[secondIndex];

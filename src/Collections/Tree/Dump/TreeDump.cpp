@@ -100,7 +100,7 @@ static void printError(unsigned error, FILE *file)
 
   fprintf(file, "<font color = red />Erors:\n");
 
-  for (int i = 0; i < ERRORS_COUNT; ++i)
+  for (int i = 0; i < TREE_ERRORS_COUNT; ++i)
     if ((error >> i) & 0x01)
       fprintf(file, "%s,\n", ERROR_MESSAGE[i]);
 

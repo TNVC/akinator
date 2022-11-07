@@ -22,7 +22,7 @@ enum TreeError {
   TREE_NULLPTR = 0x01 << 0,
 };
 
-const int ERRORS_COUNT = 1;
+const int TREE_ERRORS_COUNT = 1;
 
 Node *createNode(element_t value, int *error = nullptr);
 
