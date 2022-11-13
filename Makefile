@@ -9,12 +9,14 @@ SANITIZERS := -fsanitize=address,leak #,alignment,bool,bounds,enum,float-cast-ov
 LFLAGS := -lpthread -lasan\
 #	-L/usr/lib/ -lFestival -L/usr/lib/speech_tools/lib -lestools -lestbase -leststring
 
-SRCDIR := src src/Utils src/functions src/Collections/Map src/Collections/Tree \
-	src/Collections/Tree/Dump src/Collections/Stack src/ResourceBundle src/Akinator
+SRCDIR := src
+SRCDIR := $(shell find $(SRCDIR) -type d)
+
+
 OBJDIR := objects
-INCDIR := include include/Utils include/functions include/Collections/Map \
-	include/Collections/Tree include/Collections/Stack include/ResourceBundle include/Akinator \
-  /usr/include/speech_tools
+INCDIR := include /usr/include/speech_tools
+INCDIR := $(shell find $(INCDIR) -type d)
+
 DEPDIR := dependences
 
 SOURCES     := $(wildcard $(addsuffix /*.cpp, $(if $(SRCDIR), $(SRCDIR), .)) )

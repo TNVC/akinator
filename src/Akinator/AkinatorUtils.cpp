@@ -80,7 +80,7 @@ void guess(Tree *tree)
         }
 
       printf(FG_BRIGHT_CYAN);
-      audioPrintf("%s%s%s", db::getString(&Bundle, "answer.final"),
+      printf("%s%s%s", db::getString(&Bundle, "answer.final"),
                   current->value, db::getString(&Bundle, "question.final"));
       printf(RESET);
 
@@ -89,7 +89,7 @@ void guess(Tree *tree)
           if (stack_size(&inaccurates))
             {
               printf(FG_BRIGHT_CYAN);
-              audioPrintf("%s%s", db::getString(&Bundle, "guess.continue"),
+              printf("%s%s", db::getString(&Bundle, "guess.continue"),
                           db::getString(&Bundle, "question.final"));
               printf(RESET);
             }
@@ -203,8 +203,8 @@ static bool guessNode(Node **current, Stack *inaccurates)
   while ((*current)->left)
     {
       printf(FG_BRIGHT_CYAN);
-      audioPrintf("%s%s", (*current)->value,
-                  db::getString(&Bundle, "question"));
+      audioPrintf("%s", (*current)->value);
+      printf(db::getString(&Bundle, "question"));
       printf(RESET);
 
       *current = getNext(*current, inaccurates);
